@@ -1,0 +1,51 @@
+import os
+import numpy as np
+import cv2
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, confusion_matrix
+from keras.applications.resnet import ResNet50, preprocess_input
+from keras.preprocessing.image import img_to_array, load_img
+
+
+# Folder path for the "wolf" category
+folder_path = 'images/collected/wolf'
+
+# Initialize lists to store images and labels
+images = []
+labels = []
+
+# Load and preprocess the images
+for filename in os.listdir(folder_path):
+    if filename.endswith('.jpg') or filename.endswith('.jpeg') or filename.endswith('.png'):
+        # Get the image path
+        img_path = os.path.join(folder_path, filename)
+
+        # Load the image
+        img = load_img(img_path, target_size=(224, 224))
+        img_array = img_to_array(img)
+        img_array = preprocess_input(img_array)
+
+        # Add the preprocessed image to the list
+        images.append(img_array)
+
+        # Add the corresponding label to the list
+        labels.append(3)  # Since we are only working with the "wolf" category, assign label 3
+
+# Convert the lists to numpy arrays
+images = np.array(images)
+labels = np.array(labels)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(images, labels, test_size=0.2, random_state=42)
+
+# Load the ResNet model (pre-trained on ImageNet)
+model = ResNet50(weights='imagenet')
+
+# Predict on the testing set
+y_pred = np.argmax(model.predict(X_test), axis=-1)
+
+# Print classification report and confusion matrix
+target_names = [categories[3]]  # Only the "wolf" category
+print(classification_report(y_test, y_pred, target_names=target_names))
+print("Confusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
